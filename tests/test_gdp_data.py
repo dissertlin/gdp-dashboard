@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -69,3 +71,20 @@ def test_real_dataset():
     assert last > 1000 and growth.endswith('x')
     # Afghanistan has no 2022 value in the data
     assert gdp_summary(real, 'AFG', 1960, 2022)[0] is None
+
+
+def test_app_runs_and_handles_empty_selection():
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(Path(__file__).parent.parent / 'streamlit_app.py'), default_timeout=30).run()
+    assert not at.exception
+    assert len(at.metric) == 6
+
+    at.multiselect[0].set_value([]).run()
+    assert not at.exception
+    assert at.warning[0].value == 'Select at least one country'
+    assert len(at.metric) == 0
+
+    at.multiselect[0].set_value(['AFG']).run()  # no 2022 data
+    assert not at.exception
+    assert at.metric[0].value == 'n/a'
