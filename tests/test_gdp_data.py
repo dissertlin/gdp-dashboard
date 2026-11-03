@@ -88,3 +88,13 @@ def test_app_runs_and_handles_empty_selection():
     at.multiselect[0].set_value(['AFG']).run()  # no 2022 data
     assert not at.exception
     assert at.metric[0].value == 'n/a'
+
+
+def test_country_names_and_billions():
+    from gdp_data import country_names, to_billions
+
+    real = load_gdp_data()
+    assert country_names(real)['DEU'] == 'Germany'
+    assert real['GDP'].notna().all()
+    out = to_billions(real.head(3))
+    assert (out['GDP (billion USD)'] * 1e9).round().equals(out['GDP'].round())

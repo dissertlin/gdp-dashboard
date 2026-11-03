@@ -23,7 +23,22 @@ def reshape_gdp(raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def load_gdp_data(path: Path = DATA_FILE) -> pd.DataFrame:
-    return reshape_gdp(pd.read_csv(path))
+    """Load the CSV, dropping empty data points and shrinking memory use."""
+    df = reshape_gdp(pd.read_csv(path)).dropna(subset=['GDP'])
+    for col in ('Country Name', 'Country Code'):
+        df[col] = df[col].astype('category')
+    return df.reset_index(drop=True)
+
+
+def country_names(df: pd.DataFrame) -> dict:
+    """Map country code -> country name."""
+    pairs = df[['Country Code', 'Country Name']].drop_duplicates()
+    return dict(zip(pairs['Country Code'].astype(str), pairs['Country Name'].astype(str)))
+
+
+def to_billions(df: pd.DataFrame) -> pd.DataFrame:
+    """Copy of df with an extra 'GDP (billion USD)' column for charting."""
+    return df.assign(**{'GDP (billion USD)': df['GDP'] / 1e9})
 
 
 def filter_gdp(df: pd.DataFrame, countries, from_year: int, to_year: int) -> pd.DataFrame:
